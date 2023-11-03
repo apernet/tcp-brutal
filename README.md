@@ -8,6 +8,18 @@ TCP Brutal is [Hysteria](https://hysteria.network/)'s congestion control algorit
 
 TODO: Installation instructions
 
+### Testing speed
+
+The [example](example) directory contains a simple speed test server+client written in Python. Usage:
+
+```bash
+# Server, listening on TCP port 1234
+python server.py -p 1234
+
+# Client, connect to example.com:1234, request download speed of 50 Mbps
+python client.py -p 1234 example.com 50
+```
+
 ## For developers
 
 This kernel module adds a new "brutal" TCP congestion control algorithm to the system, which programs can enable using TCP_CONGESTION sockopt.

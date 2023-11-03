@@ -6,6 +6,18 @@ TCP Brutal 是 [Hysteria](https://hysteria.network/) 中的同名拥塞控制算
 
 TODO：安装指南
 
+### 测试速度
+
+[example](example) 目录中提供了一个基于 Python 的简单测速服务端+客户端。使用方法：
+
+```bash
+# 服务端，监听在 TCP 1234 端口
+python server.py -p 1234
+
+# 客户端，连接到 example.com:1234，请求下载速度 50 Mbps
+python client.py -p 1234 example.com 50
+```
+
 ## 开发者指南
 
 该内核模块向系统添加了一个新的 "brutal" TCP 拥塞控制算法，程序可以使用 TCP_CONGESTION sockopt 来启用。
