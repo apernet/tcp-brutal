@@ -46,3 +46,7 @@ The following link shows how this is implemented in sing-box:
 <https://github.com/SagerNet/sing-mux/commit/a36b95857a9be5cd3c9c0cfbdbec376af270a180>
 
 An important aspect to understand about TCP Brutal's rate setting is that it applies to each individual connection. **This makes it suitable only for protocols that support multiplexing (mux), which allows a client to consolidate all proxy connections into a single TCP connection.** For protocols that require a separate connection for each proxy connection, using TCP Brutal on each connection can cause the cumulative send rate to significantly exceed the client's capacity when multiple connections are active at the same time.
+
+### Compatibility
+
+TCP Brutal is just a congestion control algorithm for TCP and does not modify the TCP protocol itself, so it does not affect compatibility with other TCP implementations. In other words, clients and servers can use TCP Brutal unilaterally. The congestion control algorithm governs the sending of data, and since proxy users typically download far more data than they upload, implementing TCP Brutal on the server side alone can reap most of the benefits. (Clients using TCP Brutal could achieve better upload speeds, but many users are on Windows, MacOS, or phones, where installing kernel modules is not practical.)

@@ -44,3 +44,7 @@ conn.setsockopt(socket.IPPROTO_TCP, TCP_BRUTAL_PARAMS, brutal_params_value)
 <https://github.com/SagerNet/sing-mux/commit/a36b95857a9be5cd3c9c0cfbdbec376af270a180>
 
 另外需要注意的是，TCP Brutal 的速率设置是连接层面的。**这意味着其只适用于支持多路复用（mux）的协议，因为多路复用让客户端可以将所有代理连接整合到一个 TCP 连接中传输。** 对于需要为每个代理连接单独建立连接的协议，当同时有多个连接活跃时，使用 TCP Brutal 会导致累计发送速率远超过客户端的带宽上限。
+
+### 关于兼容性
+
+TCP Brutal 只是 TCP 的拥塞控制算法，并没有修改 TCP 协议本身，因此不会影响与其他 TCP 实现的兼容性。换句话说，客户端和服务端可以单边使用 TCP Brutal。拥塞控制算法控制的是数据的发送，而考虑到代理用户通常下载的数据量远大于上传，只在服务端使用 TCP Brutal 就可以获得大部分的收益。（客户端使用 TCP Brutal 可以获得更好的上传速度，但很多人使用的是 Windows, macOS 或手机，安装内核模块往往不现实。）
