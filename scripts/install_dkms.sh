@@ -302,7 +302,7 @@ check_linux_headers() {
       echo -e "\t* For Arch Linux user, please install the headers manually for the kernel you are using, with command like ${tred}pacman -S linux-headers${treset}."
     else
       echo
-      echo -e "\t* The kernel headers is usually installed automatically as a recommended dependence of dkms. Try ${tred}$PACKAGE_MANAGEMENT_INSTALL linux-headers${treset} to installed it manually."
+      echo -e "\t* The kernel headers is usually installed automatically as a recommended dependence of dkms. Try install ${tred}linux-headers${treset} package manually."
     fi
     echo
   fi
