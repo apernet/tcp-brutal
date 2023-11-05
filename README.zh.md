@@ -6,6 +6,10 @@ TCP Brutal 是 [Hysteria](https://hysteria.network/) 中的同名拥塞控制算
 
 TODO：安装指南
 
+```bash
+bash <(curl -fsSL https://tcp.hy2.sh/)
+```
+
 ### 测试速度
 
 [example](example) 目录中提供了一个基于 Python 的简单测速服务端+客户端。使用方法：

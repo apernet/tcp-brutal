@@ -8,6 +8,10 @@ TCP Brutal is [Hysteria](https://hysteria.network/)'s congestion control algorit
 
 TODO: Installation instructions
 
+```bash
+bash <(curl -fsSL https://tcp.hy2.sh/)
+```
+
 ### Testing speed
 
 The [example](example) directory contains a simple speed test server+client written in Python. Usage:
