@@ -101,6 +101,19 @@ static void brutal_init(struct sock *sk)
     cmpxchg(&sk->sk_pacing_status, SK_PACING_NONE, SK_PACING_NEEDED);
 }
 
+// Copied from tcp.h for compatibility reasons
+static inline u32 tcp_snd_cwnd(const struct tcp_sock *tp)
+{
+    return tp->snd_cwnd;
+}
+
+// Copied from tcp.h for compatibility reasons
+static inline void tcp_snd_cwnd_set(struct tcp_sock *tp, u32 val)
+{
+    WARN_ON_ONCE((int)val <= 0);
+    tp->snd_cwnd = val;
+}
+
 static void brutal_update_rate(struct sock *sk)
 {
     struct tcp_sock *tp = tcp_sk(sk);
