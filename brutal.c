@@ -102,13 +102,13 @@ static void brutal_init(struct sock *sk)
 }
 
 // Copied from tcp.h for compatibility reasons
-static inline u32 tcp_snd_cwnd(const struct tcp_sock *tp)
+static inline u32 brutal_tcp_snd_cwnd(const struct tcp_sock *tp)
 {
     return tp->snd_cwnd;
 }
 
 // Copied from tcp.h for compatibility reasons
-static inline void tcp_snd_cwnd_set(struct tcp_sock *tp, u32 val)
+static inline void brutal_tcp_snd_cwnd_set(struct tcp_sock *tp, u32 val)
 {
     WARN_ON_ONCE((int)val <= 0);
     tp->snd_cwnd = val;
@@ -159,7 +159,7 @@ static void brutal_update_rate(struct sock *sk)
     cwnd /= 10;
     cwnd = max_t(u32, cwnd, MIN_CWND);
 
-    tcp_snd_cwnd_set(tp, min(cwnd, tp->snd_cwnd_clamp));
+    brutal_tcp_snd_cwnd_set(tp, min(cwnd, tp->snd_cwnd_clamp));
 
     WRITE_ONCE(sk->sk_pacing_rate, min_t(u64, rate, READ_ONCE(sk->sk_max_pacing_rate)));
 }
@@ -198,7 +198,7 @@ static void brutal_main(struct sock *sk, const struct rate_sample *rs)
 
 static u32 brutal_undo_cwnd(struct sock *sk)
 {
-    return tcp_snd_cwnd(tcp_sk(sk));
+    return brutal_tcp_snd_cwnd(tcp_sk(sk));
 }
 
 static u32 brutal_ssthresh(struct sock *sk)
