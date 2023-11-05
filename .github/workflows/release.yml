@@ -1,0 +1,34 @@
+name: "Build release"
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Run build script
+        run: |
+          make dkms-tarball
+          mkdir -p build/
+          mv dkms.tar.gz build/tcp-brutal.dkms.tar.gz
+
+      - name: Generate hashes
+        run: |
+          for file in build/*; do
+            sha256sum $file >> build/hashes.txt
+          done
+
+      - name: Upload GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*
