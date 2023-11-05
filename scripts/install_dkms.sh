@@ -474,7 +474,19 @@ check_show_usage_and_exit() {
 dkms_get_installed_versions() {
   local _module="$1"
 
-  dkms status | grep -oP "$_module"'/\K[A-Za-z0-9.-]*'
+  local _dkms_moddir="/var/lib/dkms/$_module"
+
+  if [[ ! -d "$_dkms_moddir" ]]; then
+    return
+  fi
+
+  for file in $(command ls "$_dkms_moddir/"); do
+    if [[ -L "$_dkms_moddir/$file" ]]; then
+      # ignore kernel-* symlinks
+      continue
+    fi
+    echo "$file"
+  done
 }
 
 dkms_remove_modules() {
@@ -818,7 +830,7 @@ perform_check() {
   else
     echo "multiple version installed"
     for version in "${_installed_versions[@]}"; do
-      echo "\tFound $version"
+      echo -e "\tFound $version"
     done
   fi
 
