@@ -19,7 +19,7 @@ SCRIPT_ARGS=("$@")
 
 # Initial URL & command of one-click script (for usage & logging)
 # TODO: change the link to real
-SCRIPT_INITIATOR_URL="https://get.hy2.io/tcp.sh"
+SCRIPT_INITIATOR_URL="https://tcp.hy2.sh"
 SCRIPT_INITIATOR_COMMAND="bash <(curl -fsSL $SCRIPT_INITIATOR_URL)"
 
 # URL of GitHub
@@ -511,11 +511,35 @@ dkms_remove_modules() {
   done
 }
 
+dkms_ldtarball() {
+  local _tarball="$1"
+
+  # dkms variables
+  local PACKAGE_NAME PACKAGE_VERSION MAKE CLEAN
+  local BUILT_MODULE_NAME DEST_MODULE_LOCATION AUTOINSTALL
+
+  local _extractdir="$(mktemp -d)"
+  tar xf "$_tarball" -C "$_extractdir"
+  source "$_extractdir/dkms_source_tree/dkms.conf"
+
+  if [[ -z "$PACKAGE_NAME" || -z "$PACKAGE_VERSION" ]]; then
+    error "Malformed DKMS tarball, PACKAGE_NAME or PACKAGE_VERSION is missing."
+    exit 22
+  fi
+
+  rm -rf "/usr/src/$PACKAGE_NAME-$PACKAGE_VERSION"
+  mkdir -p "/usr/src/$PACKAGE_NAME-$PACKAGE_VERSION"
+  cp -a "$_extractdir/dkms_source_tree/." "/usr/src/$PACKAGE_NAME-$PACKAGE_VERSION/"
+  rm -rf "$_extractdir"
+
+  dkms add "$PACKAGE_NAME/$PACKAGE_VERSION"
+}
+
 dkms_install_tarball() {
   local _tarball="$1"
 
   echo "Installing DKMS module from tarball file $_tarball ... "
-  if ! dkms ldtarball "$_tarball" --force; then
+  if ! dkms_ldtarball "$_tarball"; then
     error "Failed to install DKMS tarball, please check above output or try to uninstall first."
     return 1
   fi
