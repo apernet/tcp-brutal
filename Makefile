@@ -32,7 +32,7 @@ clean-dkms.conf:
 	$(RM) dkms.conf
 
 $(DKMS_TARBALL): dkms.conf Makefile brutal.c
-	$(TAR) cf $(DKMS_TARBALL) \
+	$(TAR) zcf $(DKMS_TARBALL) \
 		--transform 's,^,./dkms_source_tree/,' \
 		dkms.conf \
 		Makefile \
