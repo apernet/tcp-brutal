@@ -12,13 +12,13 @@ TODO: Installation instructions
 bash <(curl -fsSL https://tcp.hy2.sh/)
 ```
 
-### Do I need a new proxy protocol that supports TCP Brutal?
+### Do I need a new proxy protocol?
 
-No. TCP Brutal supports all existing TCP proxy protocols, **but requires support from both the client and server software** (to provide bandwidth options, exchange bandwidth information, etc.). Contact the developers of the proxy software you are using and ask them to add support.
+No. TCP Brutal supports all existing TCP proxy protocols, **but requires support from both the client and server software** (to provide bandwidth options, exchange bandwidth information, etc.). Ask the developers of the proxy software you use to add support.
 
-### Testing speed
+### Speed test
 
-The [example](example) directory contains a simple speed test server+client written in Python. Usage:
+The [example](example) directory contains a simple speed test server+client in Python. Usage:
 
 ```bash
 # Server, listening on TCP port 1234
@@ -59,14 +59,14 @@ conn.setsockopt(socket.IPPROTO_TCP, TCP_BRUTAL_PARAMS, brutal_params_value)
 
 Like Hysteria, Brutal is designed for environments where the user knows the bandwidth of their connection, as this information is essential for Brutal to work. While Hysteria's protocol is designed with this in mind, none of the existing TCP proxy protocols (at the time of this writing) have such a mechanism for exchanging bandwidth information between client and server, so that a client can tell the server how fast it should send and vice versa.
 
-To work around this, we suggest using the destination address field, which every proxy protocol has in one form or another. Clients and servers supporting TCP Brutal can use a special address (e.g. `_BrutalBwExchange`) to indicate that they want to exchange bandwidth information. For example, the client can create a `_BrutalBwExchange` connection request and, if the server accepts, send its bandwidth information and also receive the server's bandwidth information over that connection.
+To work around this, we suggest using the "destination address" field, which every proxy protocol has in one form or another. Clients and servers supporting TCP Brutal can use a special address (e.g. `_BrutalBwExchange`) to indicate that they want to exchange bandwidth information. For example, the client can create a `_BrutalBwExchange` connection request and, if the server accepts, use that connection to exchange bandwidth information with the server.
 
 The following link shows how this is implemented in sing-box:
 
 <https://github.com/SagerNet/sing-mux/commit/ae2745a33479b125453cb918e6d40b8305c09dff>
 
-An important aspect to understand about TCP Brutal's rate setting is that it applies to each individual connection. **This makes it suitable only for protocols that support multiplexing (mux), which allows a client to consolidate all proxy connections into a single TCP connection.** For protocols that require a separate connection for each proxy connection, using TCP Brutal on each connection can cause the cumulative send rate to significantly exceed the client's capacity when multiple connections are active at the same time.
+An important aspect to understand about TCP Brutal's rate setting is that it applies to each individual connection. **This makes it suitable only for protocols that support multiplexing (mux), which allows a client to consolidate all proxy connections into a single TCP connection.** For protocols that require a separate connection for each proxy connection, using TCP Brutal will overwhelm the receiver if multiple connections are active at the same time.
 
 ### Compatibility
 
-TCP Brutal is just a congestion control algorithm for TCP and does not modify the TCP protocol itself, so it does not affect compatibility with other TCP implementations. In other words, clients and servers can use TCP Brutal unilaterally. The congestion control algorithm governs the sending of data, and since proxy users typically download far more data than they upload, implementing TCP Brutal on the server side alone can reap most of the benefits. (Clients using TCP Brutal could achieve better upload speeds, but many users are on Windows, MacOS, or phones, where installing kernel modules is not practical.)
+TCP Brutal is only a congestion control algorithm for TCP and does not alter the TCP protocol itself. Clients and servers can use TCP Brutal unilaterally. The congestion control algorithm controls the sending of data, and since proxy users typically download far more data than they upload, implementing TCP Brutal on the server side alone can reap most of the benefits. (Clients using TCP Brutal could achieve better upload speeds, but many users are on Windows, MacOS, or phones where installing kernel modules is impractical).
