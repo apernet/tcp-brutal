@@ -12,6 +12,10 @@ TODO: Installation instructions
 bash <(curl -fsSL https://tcp.hy2.sh/)
 ```
 
+### Do I need a new proxy protocol that supports TCP Brutal?
+
+No. TCP Brutal supports all existing TCP proxy protocols, **but requires support from both the client and server software** (to provide bandwidth options, exchange bandwidth information, etc.). Contact the developers of the proxy software you are using and ask them to add support.
+
 ### Testing speed
 
 The [example](example) directory contains a simple speed test server+client written in Python. Usage:
