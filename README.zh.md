@@ -1,6 +1,6 @@
 # ![TCP Brutal](logo.png)
 
-TCP Brutal 是 [Hysteria](https://hysteria.network/) 中的同名拥塞控制算法移植到 TCP 的版本。关于 Brutal 本身的信息，可以在 [Hysteria 文档](https://hysteria.network/zh/docs/advanced/Full-Server-Config/#_6)中找到。作为 Hysteria 官方子项目，TCP Brutal 会保持与 Hysteria 中的 Brutal 同步更新。
+TCP Brutal 是 [Hysteria](https://hysteria.network/) 中的同名拥塞控制算法移植到 TCP 的版本，作为一个 Linux 内核模块。关于 Brutal 本身的信息，可以在 [Hysteria 文档](https://hysteria.network/zh/docs/advanced/Full-Server-Config/#_6)中找到。作为 Hysteria 官方子项目，TCP Brutal 会保持与 Hysteria 中的 Brutal 同步更新。
 
 ## 用户指南
 
@@ -17,6 +17,8 @@ bash <(curl -fsSL https://tcp.hy2.sh/)
 # Ubuntu: apt install linux-headers-$(uname -r)
 make && make load
 ```
+
+> 需要内核版本 5.8 或更高。
 
 ### 需要新协议吗？
 

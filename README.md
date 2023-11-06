@@ -1,6 +1,6 @@
 # ![TCP Brutal](logo.png)
 
-TCP Brutal is [Hysteria](https://hysteria.network/)'s congestion control algorithm ported to TCP. Information about Brutal itself can be found in the [Hysteria documentation](https://hysteria.network/docs/advanced/Full-Server-Config/#bandwidth-behavior-explained). As an official subproject of Hysteria, TCP Brutal is actively maintained to be in sync with the Brutal implementation in Hysteria.
+TCP Brutal is [Hysteria](https://hysteria.network/)'s congestion control algorithm ported to TCP, as a Linux kernel module. Information about Brutal itself can be found in the [Hysteria documentation](https://hysteria.network/docs/advanced/Full-Server-Config/#bandwidth-behavior-explained). As an official subproject of Hysteria, TCP Brutal is actively maintained to be in sync with the Brutal implementation in Hysteria.
 
 **中文文档：[README.zh.md](README.zh.md)**
 
@@ -19,6 +19,8 @@ Manual compilation and loading:
 # Ubuntu: apt install linux-headers-$(uname -r)
 make && make load
 ```
+
+> Kernel version 5.8 or later is required.
 
 ### Do I need a new proxy protocol?
 
