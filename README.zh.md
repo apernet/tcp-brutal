@@ -4,10 +4,18 @@ TCP Brutal 是 [Hysteria](https://hysteria.network/) 中的同名拥塞控制算
 
 ## 用户指南
 
-TODO：安装指南
+安装脚本：
 
 ```bash
 bash <(curl -fsSL https://tcp.hy2.sh/)
+```
+
+手动编译并加载：
+
+```bash
+# 确保安装了内核头文件
+# Ubuntu: apt install linux-headers-$(uname -r)
+make && make load
 ```
 
 ### 需要新协议吗？

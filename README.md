@@ -6,10 +6,18 @@ TCP Brutal is [Hysteria](https://hysteria.network/)'s congestion control algorit
 
 ## For users
 
-TODO: Installation instructions
+Installation script:
 
 ```bash
 bash <(curl -fsSL https://tcp.hy2.sh/)
+```
+
+Manual compilation and loading:
+
+```bash
+# Make sure kernel headers are installed
+# Ubuntu: apt install linux-headers-$(uname -r)
+make && make load
 ```
 
 ### Do I need a new proxy protocol?
