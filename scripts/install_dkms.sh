@@ -210,11 +210,7 @@ install_linux_headers() {
 
   echo "Try to install linux-headers for $_kernel_ver ... "
 
-  if has_command dpkg; then
-    install_software "linux-headers-$_kernel_ver"
-  elif has_command rpm; then
-    install_software "kernel-devel-$_kernel_ver"
-  elif has_command pacman; then
+  if has_command pacman; then
     local _kernel_img="/lib/modules/$_kernel_ver/vmlinuz"
     if [[ ! -f "$_kernel_img" ]]; then
       error "Kernel image does not exist."
@@ -229,6 +225,10 @@ install_linux_headers() {
       return 2
     fi
     install_software "$_kernel_pkg-headers"
+  elif has_command apt; then
+    install_software "linux-headers-$_kernel_ver"
+  elif has_command dnf || has_command yum; then
+    install_software "kernel-devel-$_kernel_ver"
   else
     # unsupported
     error "Automatically linux headers installing is currently not supported on this distribution."
