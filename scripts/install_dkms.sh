@@ -158,7 +158,7 @@ detect_package_manager() {
   fi
 
   if has_command apt; then
-    PACKAGE_MANAGEMENT_INSTALL='apt -y install'
+    PACKAGE_MANAGEMENT_INSTALL='apt -y --no-install-recommends install'
     return 0
   fi
 
@@ -202,6 +202,37 @@ install_software() {
   else
     error "Cannot install '$_package_name' with detected package manager, please install it manually."
     exit 65
+  fi
+}
+
+install_linux_headers() {
+  local _kernel_ver="$(uname -r)"
+
+  echo "Try to install linux-headers for $_kernel_ver ... "
+
+  if has_command dpkg; then
+    install_software "linux-headers-$_kernel_ver"
+  elif has_command rpm; then
+    install_software "kernel-devel-$_kernel_ver"
+  elif has_command pacman; then
+    local _kernel_img="/lib/modules/$_kernel_ver/vmlinuz"
+    if [[ ! -f "$_kernel_img" ]]; then
+      error "Kernel image does not exist."
+      note "If you are using a kernel installed by pacman, this usually caused by system upgrading without reboot."
+      note "Please reboot your server and try again."
+      return 2
+    fi
+    local _kernel_pkg=$(pacman -Qoq "$_kernel_img")
+    if [[ -z "$_kernel_pkg" ]]; then
+      error "Failed to detect kernel package."
+      warning "It seems like you are NOT using a kernel that installed by pacman."
+      return 2
+    fi
+    install_software "$_kernel_pkg-headers"
+  else
+    # unsupported
+    error "Automatically linux headers installing is currently not supported on this distribution."
+    return 1
   fi
 }
 
@@ -291,20 +322,17 @@ is_archlinux() {
   test -f "/etc/arch-release"
 }
 
+
 check_linux_headers() {
-  if ! is_linux_headers_installed; then
-    warning "Kernel headers is missing for current running kernel."
-    warning "The DKMS kernel module might not be compiled."
-    echo
-    echo -e "\t* If you've recently update your system, please reboot it first."
-    if is_archlinux; then
-      echo
-      echo -e "\t* For Arch Linux user, please install the headers manually for the kernel you are using, with command like ${tred}pacman -S linux-headers${treset}."
-    else
-      echo
-      echo -e "\t* The kernel headers is usually installed automatically as a recommended dependence of dkms. Try install ${tred}linux-headers${treset} package manually."
+  echo -n "Checking linux-headers ... "
+  if is_linux_headers_installed; then
+    echo "ok"
+  else
+    echo "not installed"
+    if ! install_linux_headers; then
+      warning "Kernel headers is missing for current running kernel."
+      warning "The DKMS kernel module will not be compiled."
     fi
-    echo
   fi
 }
 
