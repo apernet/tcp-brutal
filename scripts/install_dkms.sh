@@ -513,7 +513,7 @@ dkms_get_installed_versions() {
       # ignore kernel-* symlinks
       continue
     fi
-    echo "$file"
+    echo "v$file"
   done
 }
 
@@ -541,12 +541,21 @@ dkms_remove_modules() {
   fi
 
   for version in "${_versions_to_remove[@]}"; do
-    echo -n "Removing DKMS module $_module/$version ... "
-    if dkms remove "$_module/$version" > /dev/null; then
+    local _dkms_version="${version#v}"
+
+    echo -n "Removing DKMS module $_module/$_dkms_version ... "
+    if dkms remove "$_module/$_dkms_version" > /dev/null; then
       echo "ok"
     else
       # suppress dkms remove failed, shall not to be a problem
-      true
+      continue
+    fi
+    echo -n "Cleaning DKMS module source /usr/src/$_module-$_dkms_version ... "
+    if rm -rf "/usr/src/$_module-$_dkms_version"; then
+      echo "ok"
+    else
+      # also suppress this
+      continue
     fi
   done
 }
@@ -770,15 +779,22 @@ perform_install() {
     if [[ "$_vercmp" -lt "0" ]]; then
       _install_needed="1"
     fi
-    local _download_destination="$(mktemp).tar.gz"
-    download_dkms_tarball "$_version" "$_download_destination"
-    _local_file="$_download_destination"
+    if [[ -n "$_install_needed" ]]; then
+      local _download_destination="$(mktemp).tar.gz"
+      download_dkms_tarball "$_version" "$_download_destination"
+      _local_file="$_download_destination"
+    fi
   fi
 
   if [[ -n "$_install_needed" ]]; then
     # remove all installed version as DKMS not allowed to overwrite a installed module
     dkms_remove_modules "$DKMS_MODULE_NAME" ""
     dkms_install_tarball "$_local_file"
+  fi
+
+  if [[ -z "$_user_provided_local_file" && -n "$_local_file" ]]; then
+    # clean auto downloaded tarball
+    rm -f "$_local_file"
   fi
 
   echo "Rebuilding DKMS modules as needed ... "
@@ -789,6 +805,10 @@ perform_install() {
   kmod_setup_autoload "$KERNEL_MODULE_NAME"
 
   if [[ -z "$_install_needed" ]]; then
+    if ! kmod_load_if_unloaded "$KERNEL_MODULE_NAME"; then
+      warning "tcp-brutal is installed but failed to load."
+    fi
+
     echo "${tbold}There is nothing to do today.${treset}"
     exit 0
   fi
