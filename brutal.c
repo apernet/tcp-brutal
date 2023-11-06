@@ -40,7 +40,11 @@ struct brutal_params
 static struct proto tcp_prot_override __ro_after_init;
 static struct proto tcpv6_prot_override __ro_after_init;
 
+#ifdef _LINUX_SOCKPTR_H
 static int brutal_set_params(struct sock *sk, sockptr_t optval, unsigned int optlen)
+#else
+static int brutal_set_params(struct sock *sk, char __user *optval, unsigned int optlen)
+#endif
 {
     struct brutal *brutal = inet_csk_ca(sk);
     struct brutal_params params;
@@ -48,8 +52,13 @@ static int brutal_set_params(struct sock *sk, sockptr_t optval, unsigned int opt
     if (optlen < sizeof(params))
         return -EINVAL;
 
+#ifdef _LINUX_SOCKPTR_H
     if (copy_from_sockptr(&params, optval, sizeof(params)))
         return -EFAULT;
+#else
+    if (copy_from_user(&params, optval, sizeof(params)))
+        return -EFAULT;
+#endif
 
     // Sanity checks
     if (params.rate < MIN_PACING_RATE)
@@ -63,7 +72,11 @@ static int brutal_set_params(struct sock *sk, sockptr_t optval, unsigned int opt
     return 0;
 }
 
+#ifdef _LINUX_SOCKPTR_H
 static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval, unsigned int optlen)
+#else
+static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, char __user *optval, unsigned int optlen)
+#endif
 {
     if (level == IPPROTO_TCP && optname == TCP_BRUTAL_PARAMS)
         return brutal_set_params(sk, optval, optlen);
@@ -71,7 +84,11 @@ static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, sockpt
         return tcp_prot.setsockopt(sk, level, optname, optval, optlen);
 }
 
+#ifdef _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval, unsigned int optlen)
+#else
+static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, char __user *optval, unsigned int optlen)
+#endif
 {
     if (level == IPPROTO_TCP && optname == TCP_BRUTAL_PARAMS)
         return brutal_set_params(sk, optval, optlen);
