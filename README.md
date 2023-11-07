@@ -38,6 +38,10 @@ python server.py -p 1234
 python client.py -p 1234 example.com 50
 ```
 
+### Do I need to configure sysctl? / Can I set TCP Brutal as the system's default congestion control?
+
+You don't need to, and shouldn't. Unlike BBR, TCP Brutal can only work properly if the program sets the bandwidth using a special sockopt, which most programs don't support unless otherwise specified. Setting it as the default congestion control would slow down all connections to 1 Mbps. Programs that do support it will actively switch to using TCP Brutal congestion control on their own.
+
 ## For developers
 
 This kernel module adds a new "brutal" TCP congestion control algorithm to the system, which programs can enable using TCP_CONGESTION sockopt.
