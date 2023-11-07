@@ -36,6 +36,10 @@ python server.py -p 1234
 python client.py -p 1234 example.com 50
 ```
 
+### 需要配置 sysctl 吗？ / 能把 TCP Brutal 设置成系统默认的拥塞控制吗？
+
+不需要也不能。与 BBR 不同，TCP Brutal 仅在应用程序对每个 TCP 连接设置带宽参数之后才能正常工作，绝大部分应用程序都不支持这个操作，将 TCP Brutal 设置成默认拥塞控制只会让系统的所有 TCP 连接降速到 1 Mbps。支持的应用程序会主动配置 TCP 连接使用 TCP Brutal 拥塞控制。
+
 ## 开发者指南
 
 该内核模块向系统添加了一个新的 "brutal" TCP 拥塞控制算法，程序可以使用 TCP_CONGESTION sockopt 来启用。
