@@ -1,6 +1,14 @@
 #include <linux/module.h>
+#include <linux/version.h>
 #include <net/tcp.h>
+
+#if IS_ENABLED(CONFIG_IPV6) && LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 #include <net/transp_v6.h>
+#else
+#warning IPv6 support is disabled. Brutal will only work with IPv4. \
+ Please ensure you have enabled CONFIG_IPV6 in your kernel config \
+ and your kernel version is greater than 5.8.
+#endif
 
 #define INIT_PACING_RATE 125000 // 1 Mbps
 #define INIT_CWND_GAIN 20
@@ -46,7 +54,9 @@ struct brutal_params
 } __packed;
 
 static struct proto tcp_prot_override __ro_after_init;
+#ifdef _TRANSP_V6_H
 static struct proto tcpv6_prot_override __ro_after_init;
+#endif // _TRANSP_V6_H
 
 #ifdef _LINUX_SOCKPTR_H
 static int brutal_set_params(struct sock *sk, sockptr_t optval, unsigned int optlen)
@@ -92,17 +102,19 @@ static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, char _
         return tcp_prot.setsockopt(sk, level, optname, optval, optlen);
 }
 
+#ifdef _TRANSP_V6_H
 #ifdef _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval, unsigned int optlen)
-#else
+#else // _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, char __user *optval, unsigned int optlen)
-#endif
+#endif // _LINUX_SOCKPTR_H
 {
     if (level == IPPROTO_TCP && optname == TCP_BRUTAL_PARAMS)
         return brutal_set_params(sk, optval, optlen);
     else
         return tcpv6_prot.setsockopt(sk, level, optname, optval, optlen);
 }
+#endif // _TRANSP_V6_H
 
 static void brutal_init(struct sock *sk)
 {
@@ -111,8 +123,10 @@ static void brutal_init(struct sock *sk)
 
     if (sk->sk_family == AF_INET)
         sk->sk_prot = &tcp_prot_override;
+#ifdef _TRANSP_V6_H
     else if (sk->sk_family == AF_INET6)
         sk->sk_prot = &tcpv6_prot_override;
+#endif // _TRANSP_V6_H
     else
         BUG(); // WTF?
 
@@ -248,8 +262,11 @@ static int __init brutal_register(void)
 
     tcp_prot_override = tcp_prot;
     tcp_prot_override.setsockopt = brutal_tcp_setsockopt;
+
+#ifdef _TRANSP_V6_H
     tcpv6_prot_override = tcpv6_prot;
     tcpv6_prot_override.setsockopt = brutal_tcpv6_setsockopt;
+#endif // _TRANSP_V6_H
 
     return tcp_register_congestion_control(&tcp_brutal_ops);
 }

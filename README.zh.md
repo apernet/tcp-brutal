@@ -18,7 +18,9 @@ bash <(curl -fsSL https://tcp.hy2.sh/)
 make && make load
 ```
 
-> 需要内核版本 5.8 或更高。
+> 需要内核版本 4.13 或更高，推荐使用版本 5.8 以上的内核。
+
+> 对于版本号小于 5.8 的内核, 只支持 IPv4。 [(缺导出符号 `tcpv6_prot`)](https://github.com/torvalds/linux/commit/6abde0b241224347cd88e2ae75902e07f55c42cb#diff-8b341e52e57c996bc4f294087ab526ac0b1c3c47e045557628cc24277cbfda0dR2124)
 
 ### 需要新协议吗？
 
