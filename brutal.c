@@ -10,7 +10,15 @@
 #define MAX_CWND_GAIN 80
 #define MIN_CWND 4
 
-#define PKT_INFO_SLOTS 5
+#ifndef ICSK_CA_PRIV_SIZE
+#error "ICSK_CA_PRIV_SIZE not defined"
+#else
+// This is the size of the private data area in struct inet_connection_sock
+// The size varies between Linux versions
+// We use it to calculate the number of slots in the packet info array
+#define PKT_INFO_SLOTS ((ICSK_CA_PRIV_SIZE - 2 * sizeof(u64)) / sizeof(struct brutal_pkt_info))
+#endif
+
 #define MIN_PKT_INFO_SAMPLES 50
 #define MIN_ACK_RATE 0.8
 
@@ -236,6 +244,7 @@ static struct tcp_congestion_ops tcp_brutal_ops = {
 static int __init brutal_register(void)
 {
     BUILD_BUG_ON(sizeof(struct brutal) > ICSK_CA_PRIV_SIZE);
+    BUILD_BUG_ON(PKT_INFO_SLOTS < 1);
 
     tcp_prot_override = tcp_prot;
     tcp_prot_override.setsockopt = brutal_tcp_setsockopt;
