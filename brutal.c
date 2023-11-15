@@ -32,6 +32,22 @@
 
 #define TCP_BRUTAL_PARAMS 23301
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+    return tp->tcp_mstamp / USEC_PER_SEC;
+}
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+// see https://github.com/torvalds/linux/commit/9a568de4818dea9a05af141046bd3e589245ab83
+u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+    return tp->tcp_mstamp.stamp_us / USEC_PER_SEC;
+}
+#else
+#include <linux/jiffies.h>
+u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+    return jiffies_to_usecs(tcp_time_stamp) / USEC_PER_SEC;
+}
+#endif
+
 struct brutal_pkt_info
 {
     u64 sec;
@@ -137,7 +153,11 @@ static void brutal_init(struct sock *sk)
 
     memset(brutal->slots, 0, sizeof(brutal->slots));
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+    // maybe optional?
+    // see https://github.com/torvalds/linux/commit/218af599fa635b107cfe10acf3249c4dfe5e4123
     cmpxchg(&sk->sk_pacing_status, SK_PACING_NONE, SK_PACING_NEEDED);
+#endif
 }
 
 // Copied from tcp.h for compatibility reasons
@@ -158,7 +178,7 @@ static void brutal_update_rate(struct sock *sk)
     struct tcp_sock *tp = tcp_sk(sk);
     struct brutal *brutal = inet_csk_ca(sk);
 
-    u64 sec = tp->tcp_mstamp / USEC_PER_SEC;
+    u64 sec = tcp_sock_get_sec(tp);
     u64 min_sec = sec - PKT_INFO_SLOTS;
     u32 acked = 0, losses = 0;
     u32 ack_rate; // Scaled by 100 (100=1.00) as kernel doesn't support float
@@ -215,7 +235,7 @@ static void brutal_main(struct sock *sk, const struct rate_sample *rs)
     if (rs->delivered < 0 || rs->interval_us <= 0)
         return;
 
-    sec = tp->tcp_mstamp / USEC_PER_SEC;
+    sec = tcp_sock_get_sec(tp);
     slot = sec % PKT_INFO_SLOTS;
 
     if (brutal->slots[slot].sec == sec)
