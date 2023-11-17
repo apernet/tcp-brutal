@@ -24,7 +24,8 @@
 // This is the size of the private data area in struct inet_connection_sock
 // The size varies between Linux versions
 // We use it to calculate the number of slots in the packet info array
-#define PKT_INFO_SLOTS ((ICSK_CA_PRIV_SIZE - 2 * sizeof(u64)) / sizeof(struct brutal_pkt_info))
+#define RAW_PKT_INFO_SLOTS ((ICSK_CA_PRIV_SIZE - 2 * sizeof(u64)) / sizeof(struct brutal_pkt_info))
+#define PKT_INFO_SLOTS (RAW_PKT_INFO_SLOTS < 3 ? 3 : (RAW_PKT_INFO_SLOTS > 5 ? 5 : RAW_PKT_INFO_SLOTS))
 #endif
 
 #define MIN_PKT_INFO_SAMPLES 50
