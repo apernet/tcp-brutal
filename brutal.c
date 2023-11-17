@@ -28,7 +28,7 @@
 #endif
 
 #define MIN_PKT_INFO_SAMPLES 50
-#define MIN_ACK_RATE 0.8
+#define MIN_ACK_RATE_PERCENT 80
 
 #define TCP_BRUTAL_PARAMS 23301
 
@@ -203,8 +203,8 @@ static void brutal_update_rate(struct sock *sk)
     else
     {
         ack_rate = acked * 100 / (acked + losses);
-        if (ack_rate < MIN_ACK_RATE * 100)
-            ack_rate = MIN_ACK_RATE * 100;
+        if (ack_rate < MIN_ACK_RATE_PERCENT)
+            ack_rate = MIN_ACK_RATE_PERCENT;
     }
 
     rate *= 100;
