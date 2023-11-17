@@ -158,8 +158,10 @@ static void brutal_init(struct sock *sk)
     memset(brutal->slots, 0, sizeof(brutal->slots));
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-    // maybe optional?
-    // see https://github.com/torvalds/linux/commit/218af599fa635b107cfe10acf3249c4dfe5e4123
+    // Pacing is REQUIRED for Brutal to work, but Linux only has internal pacing after 4.13.
+    // For kernels prior to 4.13, you MUST add fq pacing manually (e.g. "tc qdisc add dev eth0 root fq pacing")
+    // or rate control will be broken.
+    // See https://github.com/torvalds/linux/commit/218af599fa635b107cfe10acf3249c4dfe5e4123 for details.
     cmpxchg(&sk->sk_pacing_status, SK_PACING_NONE, SK_PACING_NEEDED);
 #endif
 }
