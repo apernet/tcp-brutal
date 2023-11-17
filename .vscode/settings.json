@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "module.h": "c",
+        "checksum.h": "c"
+    }
+}
