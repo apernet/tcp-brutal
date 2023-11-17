@@ -33,17 +33,20 @@
 #define TCP_BRUTAL_PARAMS 23301
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
     return tp->tcp_mstamp / USEC_PER_SEC;
 }
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
 // see https://github.com/torvalds/linux/commit/9a568de4818dea9a05af141046bd3e589245ab83
-u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
     return tp->tcp_mstamp.stamp_us / USEC_PER_SEC;
 }
 #else
 #include <linux/jiffies.h>
-u64 tcp_sock_get_sec(const struct tcp_sock *tp) {
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
     return jiffies_to_usecs(tcp_time_stamp) / USEC_PER_SEC;
 }
 #endif
@@ -121,7 +124,7 @@ static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, char _
 #ifdef _TRANSP_V6_H
 #ifdef _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval, unsigned int optlen)
-#else // _LINUX_SOCKPTR_H
+#else  // _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, char __user *optval, unsigned int optlen)
 #endif // _LINUX_SOCKPTR_H
 {
