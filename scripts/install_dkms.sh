@@ -544,7 +544,7 @@ dkms_remove_modules() {
     local _dkms_version="${version#v}"
 
     echo -n "Removing DKMS module $_module/$_dkms_version ... "
-    if dkms remove "$_module/$_dkms_version" > /dev/null; then
+    if dkms remove "$_module/$_dkms_version" --all > /dev/null; then
       echo "ok"
     else
       # suppress dkms remove failed, shall not to be a problem
