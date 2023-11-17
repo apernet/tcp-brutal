@@ -1,6 +1,14 @@
 #include <linux/module.h>
+#include <linux/version.h>
 #include <net/tcp.h>
+
+#if IS_ENABLED(CONFIG_IPV6) && LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 #include <net/transp_v6.h>
+#else
+#warning IPv6 support is disabled. Brutal will only work with IPv4. \
+ Please ensure you have enabled CONFIG_IPV6 in your kernel config \
+ and your kernel version is greater than 5.8.
+#endif
 
 #define INIT_PACING_RATE 125000 // 1 Mbps
 #define INIT_CWND_GAIN 20
@@ -10,11 +18,39 @@
 #define MAX_CWND_GAIN 80
 #define MIN_CWND 4
 
-#define PKT_INFO_SLOTS 5
+#ifndef ICSK_CA_PRIV_SIZE
+#error "ICSK_CA_PRIV_SIZE not defined"
+#else
+// This is the size of the private data area in struct inet_connection_sock
+// The size varies between Linux versions
+// We use it to calculate the number of slots in the packet info array
+#define RAW_PKT_INFO_SLOTS ((ICSK_CA_PRIV_SIZE - 2 * sizeof(u64)) / sizeof(struct brutal_pkt_info))
+#define PKT_INFO_SLOTS (RAW_PKT_INFO_SLOTS < 3 ? 3 : (RAW_PKT_INFO_SLOTS > 5 ? 5 : RAW_PKT_INFO_SLOTS))
+#endif
+
 #define MIN_PKT_INFO_SAMPLES 50
-#define MIN_ACK_RATE 0.8
+#define MIN_ACK_RATE_PERCENT 80
 
 #define TCP_BRUTAL_PARAMS 23301
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
+    return tp->tcp_mstamp / USEC_PER_SEC;
+}
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+// see https://github.com/torvalds/linux/commit/9a568de4818dea9a05af141046bd3e589245ab83
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
+    return tp->tcp_mstamp.stamp_us / USEC_PER_SEC;
+}
+#else
+#include <linux/jiffies.h>
+u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+{
+    return jiffies_to_usecs(tcp_time_stamp) / USEC_PER_SEC;
+}
+#endif
 
 struct brutal_pkt_info
 {
@@ -38,7 +74,9 @@ struct brutal_params
 } __packed;
 
 static struct proto tcp_prot_override __ro_after_init;
+#ifdef _TRANSP_V6_H
 static struct proto tcpv6_prot_override __ro_after_init;
+#endif // _TRANSP_V6_H
 
 #ifdef _LINUX_SOCKPTR_H
 static int brutal_set_params(struct sock *sk, sockptr_t optval, unsigned int optlen)
@@ -84,17 +122,19 @@ static int brutal_tcp_setsockopt(struct sock *sk, int level, int optname, char _
         return tcp_prot.setsockopt(sk, level, optname, optval, optlen);
 }
 
+#ifdef _TRANSP_V6_H
 #ifdef _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval, unsigned int optlen)
-#else
+#else  // _LINUX_SOCKPTR_H
 static int brutal_tcpv6_setsockopt(struct sock *sk, int level, int optname, char __user *optval, unsigned int optlen)
-#endif
+#endif // _LINUX_SOCKPTR_H
 {
     if (level == IPPROTO_TCP && optname == TCP_BRUTAL_PARAMS)
         return brutal_set_params(sk, optval, optlen);
     else
         return tcpv6_prot.setsockopt(sk, level, optname, optval, optlen);
 }
+#endif // _TRANSP_V6_H
 
 static void brutal_init(struct sock *sk)
 {
@@ -103,8 +143,10 @@ static void brutal_init(struct sock *sk)
 
     if (sk->sk_family == AF_INET)
         sk->sk_prot = &tcp_prot_override;
+#ifdef _TRANSP_V6_H
     else if (sk->sk_family == AF_INET6)
         sk->sk_prot = &tcpv6_prot_override;
+#endif // _TRANSP_V6_H
     else
         BUG(); // WTF?
 
@@ -115,7 +157,13 @@ static void brutal_init(struct sock *sk)
 
     memset(brutal->slots, 0, sizeof(brutal->slots));
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+    // Pacing is REQUIRED for Brutal to work, but Linux only has internal pacing after 4.13.
+    // For kernels prior to 4.13, you MUST add fq pacing manually (e.g. "tc qdisc add dev eth0 root fq pacing")
+    // or rate control will be broken.
+    // See https://github.com/torvalds/linux/commit/218af599fa635b107cfe10acf3249c4dfe5e4123 for details.
     cmpxchg(&sk->sk_pacing_status, SK_PACING_NONE, SK_PACING_NEEDED);
+#endif
 }
 
 // Copied from tcp.h for compatibility reasons
@@ -136,7 +184,7 @@ static void brutal_update_rate(struct sock *sk)
     struct tcp_sock *tp = tcp_sk(sk);
     struct brutal *brutal = inet_csk_ca(sk);
 
-    u64 sec = tp->tcp_mstamp / USEC_PER_SEC;
+    u64 sec = tcp_sock_get_sec(tp);
     u64 min_sec = sec - PKT_INFO_SLOTS;
     u32 acked = 0, losses = 0;
     u32 ack_rate; // Scaled by 100 (100=1.00) as kernel doesn't support float
@@ -161,8 +209,8 @@ static void brutal_update_rate(struct sock *sk)
     else
     {
         ack_rate = acked * 100 / (acked + losses);
-        if (ack_rate < MIN_ACK_RATE * 100)
-            ack_rate = MIN_ACK_RATE * 100;
+        if (ack_rate < MIN_ACK_RATE_PERCENT)
+            ack_rate = MIN_ACK_RATE_PERCENT;
     }
 
     rate *= 100;
@@ -193,7 +241,7 @@ static void brutal_main(struct sock *sk, const struct rate_sample *rs)
     if (rs->delivered < 0 || rs->interval_us <= 0)
         return;
 
-    sec = tp->tcp_mstamp / USEC_PER_SEC;
+    sec = tcp_sock_get_sec(tp);
     slot = sec % PKT_INFO_SLOTS;
 
     if (brutal->slots[slot].sec == sec)
@@ -236,11 +284,15 @@ static struct tcp_congestion_ops tcp_brutal_ops = {
 static int __init brutal_register(void)
 {
     BUILD_BUG_ON(sizeof(struct brutal) > ICSK_CA_PRIV_SIZE);
+    BUILD_BUG_ON(PKT_INFO_SLOTS < 1);
 
     tcp_prot_override = tcp_prot;
     tcp_prot_override.setsockopt = brutal_tcp_setsockopt;
+
+#ifdef _TRANSP_V6_H
     tcpv6_prot_override = tcpv6_prot;
     tcpv6_prot_override.setsockopt = brutal_tcpv6_setsockopt;
+#endif // _TRANSP_V6_H
 
     return tcp_register_congestion_control(&tcp_brutal_ops);
 }
