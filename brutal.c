@@ -243,7 +243,7 @@ static void brutal_main(struct sock *sk, const struct rate_sample *rs)
         return;
 
     sec = tcp_sock_get_sec(tp);
-    slot = sec % PKT_INFO_SLOTS;
+    div_u64_rem(sec, PKT_INFO_SLOTS, &slot);
 
     if (brutal->slots[slot].sec == sec)
     {
