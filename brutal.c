@@ -309,4 +309,4 @@ module_exit(brutal_unregister);
 MODULE_AUTHOR("Aperture Internet Laboratory");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("TCP Brutal");
-MODULE_VERSION("1.0.1");
+MODULE_VERSION("1.0.2");
