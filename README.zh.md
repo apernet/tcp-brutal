@@ -77,7 +77,7 @@ conn.setsockopt(socket.IPPROTO_TCP, TCP_BRUTAL_PARAMS, brutal_params_value)
 
 以下链接是 sing-box 的实现：
 
-<https://github.com/SagerNet/sing-mux/commit/ae2745a33479b125453cb918e6d40b8305c09dff>
+<https://github.com/SagerNet/sing-mux/commit/6b086ed6bb0790160de73b16683e75efe2220a79>
 
 另外需要注意的是，sockopt 设置的是每个连接的速度。**这意味着其只适用于支持多路复用（mux）的协议，因为多路复用让客户端可以将所有代理连接整合到一个 TCP 连接中传输。** 对于需要为每个代理连接单独建立连接的协议，当同时有多个连接活跃时，使用 TCP Brutal 会导致总发送速率超过所设置的上限。
 

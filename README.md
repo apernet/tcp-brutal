@@ -79,7 +79,7 @@ To work around this, we suggest using the "destination address" field, which eve
 
 The following link shows how this is implemented in sing-box:
 
-<https://github.com/SagerNet/sing-mux/commit/ae2745a33479b125453cb918e6d40b8305c09dff>
+<https://github.com/SagerNet/sing-mux/commit/6b086ed6bb0790160de73b16683e75efe2220a79>
 
 An important aspect to understand about TCP Brutal's rate setting is that it applies to each individual connection. **This makes it suitable only for protocols that support multiplexing (mux), which allows a client to consolidate all proxy connections into a single TCP connection.** For protocols that require a separate connection for each proxy connection, using TCP Brutal will overwhelm the receiver if multiple connections are active at the same time.
 
