@@ -230,7 +230,11 @@ static void brutal_update_rate(struct sock *sk)
     WRITE_ONCE(sk->sk_pacing_rate, min_t(u64, rate, READ_ONCE(sk->sk_max_pacing_rate)));
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0)
+static void brutal_main(struct sock *sk, u32 ack, int flag, const struct rate_sample *rs)
+#else
 static void brutal_main(struct sock *sk, const struct rate_sample *rs)
+#endif
 {
     struct tcp_sock *tp = tcp_sk(sk);
     struct brutal *brutal = inet_csk_ca(sk);
