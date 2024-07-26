@@ -35,19 +35,19 @@
 #define TCP_BRUTAL_PARAMS 23301
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+static u64 tcp_sock_get_sec(const struct tcp_sock *tp)
 {
     return div_u64(tp->tcp_mstamp, USEC_PER_SEC);
 }
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
 // see https://github.com/torvalds/linux/commit/9a568de4818dea9a05af141046bd3e589245ab83
-u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+static u64 tcp_sock_get_sec(const struct tcp_sock *tp)
 {
     return div_u64(tp->tcp_mstamp.stamp_us, USEC_PER_SEC);
 }
 #else
 #include <linux/jiffies.h>
-u64 tcp_sock_get_sec(const struct tcp_sock *tp)
+static u64 tcp_sock_get_sec(const struct tcp_sock *tp)
 {
     return div_u64(jiffies_to_usecs(tcp_time_stamp), USEC_PER_SEC);
 }
