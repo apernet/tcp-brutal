@@ -17,6 +17,7 @@ Manual compilation and loading:
 ```bash
 # Make sure kernel headers are installed
 # Ubuntu: apt install linux-headers-$(uname -r)
+# RaspberryPi(Debian): apt install raspberrypi-kernel-headers
 make && make load
 ```
 
